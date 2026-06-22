@@ -40,6 +40,10 @@ self-clear a gate.
 | **Lay out a sustainable posting calendar across the pillars** | `/calendar` |
 | **Draft the posts into the calendar slots, in the person's voice** | `/write` |
 | **Atomize each post into channel-native derivatives** | `/repurpose` |
+| **Assemble authored content into a dated publish queue** | `/distribute` |
+| **Work the conversations the posts start (the two-way half)** | `/engage` |
+| **Track + pursue authority signals (organic-first KPIs)** | `/authority` |
+| **Review brand health + route recalibrations** | `/review` |
 
 ### The pipeline (each step gates the next)
 
@@ -53,7 +57,11 @@ self-clear a gate.
   → /calendar           (sustainable posting calendar; slots distributed across pillars by weight, capped to stated cadence)
   → /write              (draft the posts into the calendar slots, in the captured voice; brief-then-write, every draft guarded — never templated prose)
   → /repurpose          (atomize each post into channel-native derivatives for secondary platforms; plan-then-recut, every derivative guarded — completes the content engine)
-  → [future phases: distribution, engage, authority, review]
+  ─────────────────────── Phase 3: the distribution & growth loop ───────────────────────
+  → /distribute         (assemble drafts + derivatives into one ordered, dated publish queue; organic-first — never auto-posts; every item re-guarded)
+  → /engage             (the two-way half: reply to comments/DMs/mentions + a sustainable engagement posture; brief-then-reply, every response guarded)
+  → /authority          (track earned authority signals + pursue grounded targets; the organic-first scoreboard; every pitch guarded against fabrication)
+  → /review             (capstone: read every artifact, score brand health, route each recalibration to its owning skill — never edits the identity gates)
 ```
 
 ---

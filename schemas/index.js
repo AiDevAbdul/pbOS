@@ -15,3 +15,9 @@ export * as contentPillars from "./content_pillars.js";
 export * as contentCalendar from "./content_calendar.js";
 export * as contentDraft from "./content_draft.js";
 export * as contentRepurpose from "./content_repurpose.js";
+
+// Phase 3 — the distribution & growth loop.
+export * as distributionQueue from "./distribution_queue.js";
+export * as engagementLog from "./engagement_log.js";
+export * as authorityLedger from "./authority_ledger.js";
+export * as brandHealthReview from "./brand_health_review.js";

@@ -261,4 +261,128 @@ test("e2e: enroll → interview → positioning(gate) → voice(gate) → consti
   assert.equal(r.status, 1, "no mode flag → usage error");
   r = run("skills/repurpose/repurpose.js", ["nonexistent-persona", "--plan"]);
   assert.equal(r.status, 3, "repurpose must fail-closed without a complete constitution");
+
+  // ───────────────────────── PHASE 3: the distribution & growth loop ─────────────────────────
+
+  // 22. DISTRIBUTE — assemble the drafts + derivatives into one ordered, dated publish queue.
+  r = run("skills/distribute/distribute.js", [SLUG]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(existsSync(resolve(DIR, "distribution_queue.json")));
+  const queue = JSON.parse(readFileSync(resolve(DIR, "distribution_queue.json"), "utf8"));
+  assert.equal(queue.status, "queued");
+  // 3 drafts (LinkedIn) + 3 derivatives (X) = 6 items.
+  assert.equal(queue.items.length, 6, "drafts + derivatives merged into one queue");
+  assert.ok(queue.items.some((it) => it.source_kind === "draft" && it.platform === "LinkedIn"));
+  assert.ok(queue.items.some((it) => it.source_kind === "derivative" && it.platform === "X"));
+  // The queue is sorted by publish date.
+  const dates = queue.items.map((it) => it.scheduled_at);
+  assert.deepEqual(dates, [...dates].sort(), "queue ordered by scheduled_at");
+  // Each derivative lands AFTER its source post (default offset +1).
+  const firstDraft = queue.items.find((it) => it.source_kind === "draft");
+  const itsDeriv = queue.items.find((it) => it.source_kind === "derivative" && it.source_date === firstDraft.source_date);
+  assert.ok(itsDeriv.scheduled_at > firstDraft.scheduled_at, "original leads, derivative follows");
+
+  // 23. GUARD PROOF — distribution re-guards; a banned word in an upstream draft blocks the queue.
+  const badDraftDoc = JSON.parse(readFileSync(resolve(DIR, "content_drafts.json"), "utf8"));
+  badDraftDoc.drafts[0].body = "Let's drive synergy across teams."; // "synergy" is in never_say
+  writeFileSync(resolve(DIR, "content_drafts.json"), JSON.stringify(badDraftDoc));
+  r = run("skills/distribute/distribute.js", [SLUG]);
+  assert.equal(r.status, 4, "distribution re-guards every item; a banned word fails the queue closed");
+  assert.match(r.stderr, /authenticity|synergy/i);
+  // Restore the good drafts for the rest of the run.
+  writeFileSync(resolve(DIR, "content_drafts.json"), JSON.stringify(draftsDoc));
+  r = run("skills/write/write.js", [SLUG, "--in", draftsPath]);
+  assert.equal(r.status, 0, r.stderr);
+  r = run("skills/distribute/distribute.js", [SLUG]);
+  assert.equal(r.status, 0, r.stderr);
+
+  // 24. ENGAGE — strategy is derived from the constitution; replies are guarded on save.
+  r = run("skills/engage/engage.js", [SLUG, "--strategy"]);
+  assert.equal(r.status, 0, r.stderr);
+  const strat = JSON.parse(r.stdout).strategy;
+  assert.equal(strat.focus_audience, "early-stage CTOs", "strategy focuses on the positioning audience");
+  assert.match(strat.daily_minutes, /min\/day/);
+
+  const inbound = { interactions: [
+    { kind: "comment", platform: "LinkedIn", inbound_text: "How do you start fixing on-call?", context: "on the tech-debt post" },
+    { kind: "dm", platform: "LinkedIn", inbound_text: "Could you advise my team?" },
+  ] };
+  const inboundPath = resolve(DIR, "inbound.json");
+  writeFileSync(inboundPath, JSON.stringify(inbound));
+  r = run("skills/engage/engage.js", [SLUG, "--brief", "--inbound", inboundPath]);
+  assert.equal(r.status, 0, r.stderr);
+  const engBriefs = JSON.parse(r.stdout).briefs;
+  assert.equal(engBriefs.length, 2);
+  assert.ok(engBriefs.every((b) => b.inbound_text && b.must_avoid.includes("synergy")), "briefs carry the inbound + banned-word list");
+
+  const engageDoc = { interactions: engBriefs.map((b) => ({
+    kind: b.kind, platform: b.platform, inbound_text: b.inbound_text, context: b.context,
+    response: `Here's the thing about ${b.inbound_text.toLowerCase()} — start with the systems, not the symptoms.`,
+  })) };
+  const engagePath = resolve(DIR, "engagement_log.json");
+  writeFileSync(engagePath, JSON.stringify(engageDoc));
+  r = run("skills/engage/engage.js", [SLUG, "--in", engagePath]);
+  assert.equal(r.status, 0, r.stderr);
+  const savedEngage = JSON.parse(readFileSync(resolve(DIR, "engagement_log.json"), "utf8"));
+  assert.equal(savedEngage.status, "engaged");
+  assert.equal(savedEngage.interactions.length, 2);
+  assert.ok(savedEngage.strategy.focus_audience, "strategy filled in deterministically on save");
+
+  // GUARD PROOF — a reply that fabricates an authority claim is blocked.
+  const badEngage = JSON.parse(JSON.stringify(engageDoc));
+  badEngage.interactions[0].response = "As a board-certified expert, here's my take.";
+  const badEngagePath = resolve(DIR, "bad_engagement.json");
+  writeFileSync(badEngagePath, JSON.stringify(badEngage));
+  r = run("skills/engage/engage.js", [SLUG, "--in", badEngagePath]);
+  assert.equal(r.status, 4, "the guard blocks a fabricated authority claim in a reply");
+  assert.match(r.stderr, /authenticity|certified/i);
+
+  // 25. AUTHORITY — targets are grounded in real identity facts; the ledger is guarded.
+  r = run("skills/authority/authority.js", [SLUG, "--plan"]);
+  assert.equal(r.status, 0, r.stderr);
+  const authTargets = JSON.parse(r.stdout).targets;
+  assert.ok(authTargets.length >= 3);
+  assert.ok(authTargets.every((t) => t.grounded_in), "every pitch is grounded in a recorded fact");
+
+  const ledgerDoc = {
+    signals: [{ type: "podcast", title: "Guested on a systems podcast", outlet: "The Pragmatic Engineer", date: "2026-06-01", note: "drove inbound DMs" }],
+    targets: authTargets.slice(0, 2).map((t) => ({ ...t, status: "pursuing" })),
+  };
+  const ledgerPath = resolve(DIR, "authority_ledger.json");
+  writeFileSync(ledgerPath, JSON.stringify(ledgerDoc));
+  r = run("skills/authority/authority.js", [SLUG, "--in", ledgerPath]);
+  assert.equal(r.status, 0, r.stderr);
+  const savedLedger = JSON.parse(readFileSync(resolve(DIR, "authority_ledger.json"), "utf8"));
+  assert.equal(savedLedger.status, "tracked");
+  assert.equal(savedLedger.signals.length, 1);
+  assert.equal(savedLedger.targets.length, 2);
+
+  // 26. REVIEW — the capstone reads every artifact, scores health, routes recalibrations.
+  r = run("skills/review/review.js", [SLUG, "--report"]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(existsSync(resolve(DIR, "brand_health_review.json")));
+  assert.ok(existsSync(resolve(DIR, "brand_health_review.html")), "shareable review HTML generated");
+  const review = JSON.parse(readFileSync(resolve(DIR, "brand_health_review.json"), "utf8"));
+  assert.equal(review.status, "reviewed");
+  assert.ok(review.score >= 0 && review.score <= 100);
+  // The fully-built brand: pillars present, cadence in capacity, drafts done, queue built, engaged, an authority signal.
+  assert.equal(review.metrics.pillars, 3);
+  assert.equal(review.metrics.drafts, 3);
+  assert.equal(review.metrics.interactions, 2);
+  assert.equal(review.metrics.authority_signals, 1);
+  assert.ok(review.metrics.distribution_built, "review sees the publish queue");
+  assert.ok(review.findings.length >= 1);
+  assert.ok(review.findings.every((f) => ["ok", "watch", "risk"].includes(f.severity)));
+  // No risks remain in a fully-built brand.
+  assert.ok(!review.findings.some((f) => f.severity === "risk"), "a fully-built brand has no risk findings");
+
+  // 27. GATE PROOF — Phase-3 skills fail-closed without a complete constitution.
+  r = run("skills/distribute/distribute.js", ["nonexistent-persona"]);
+  assert.equal(r.status, 3, "distribute fails closed without a complete constitution");
+  r = run("skills/engage/engage.js", ["nonexistent-persona", "--strategy"]);
+  assert.equal(r.status, 3, "engage fails closed without a complete constitution");
+  r = run("skills/authority/authority.js", ["nonexistent-persona", "--plan"]);
+  assert.equal(r.status, 3, "authority fails closed without a complete constitution");
+  r = run("skills/review/review.js", ["nonexistent-persona"]);
+  assert.equal(r.status, 3, "review fails closed without a complete constitution");
 });
