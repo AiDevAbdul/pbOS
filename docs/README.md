@@ -6,19 +6,20 @@ that individual. Sibling to smOS (the Meta-ads agency OS), built on the same pro
 (fail-closed schemas + human gates, an authenticity guard chokepoint, offline-safe
 persistence, HTML/PDF rendering).
 
-## Status — Phase 1 (Foundation) ✅ · Phase 2 (Content engine) 🚧
+## Status — Phase 1 (Foundation) ✅ · Phase 2 (Content engine) ✅
 
-Phase 1 delivers the foundation and discovery engine. Phase 2 is the content engine:
-**`/pillars`** (the first CONSUMER of the constitution and the first skill to ENFORCE the
-authenticity guard), **`/calendar`** (a sustainable posting plan across those pillars), then
-**`/write`** (drafts the actual posts into the calendar slots, in the captured voice, every
-draft guarded). The rest of the content engine (repurpose) and the distribution/authority/
-review phases follow — all read the constitution Phase 1 produces.
+Phase 1 delivers the foundation and discovery engine. Phase 2 is the **content engine**, now
+complete: **`/pillars`** (the first CONSUMER of the constitution and the first skill to ENFORCE
+the authenticity guard), **`/calendar`** (a sustainable posting plan across those pillars),
+**`/write`** (drafts the actual posts into the calendar slots, in the captured voice), and
+**`/repurpose`** (atomizes each post into channel-native derivatives for the other platforms).
+Every content write clears the authenticity guard. The distribution/authority/review phases
+follow — all read the constitution Phase 1 produces.
 
 ## The pipeline
 
 ```
-/enroll → /coach-interview → /positioning (gate) → /voice (gate) → /constitution → /pillars → /calendar → /write
+/enroll → /coach-interview → /positioning (gate) → /voice (gate) → /constitution → /pillars → /calendar → /write → /repurpose
 ```
 
 1. **/enroll** — scaffold the person's isolated workspace.
@@ -35,18 +36,22 @@ review phases follow — all read the constitution Phase 1 produces.
 8. **/write** — draft the actual posts into the calendar slots, in the captured voice.
    Brief-then-write (never templated prose — pbOS won't put words in their mouth); every
    draft clears the authenticity guard before it's saved.
+9. **/repurpose** — atomize each post into channel-native derivatives for the person's other
+   platforms (LinkedIn post → X thread, newsletter, video script). Plan-then-recut (never
+   copy-paste cross-posting); every derivative clears the authenticity guard.
 
 ## Architecture
 
 - **`schemas/`** — `personal_brand_profile` (the constitution + 2 gates), `interview_answers`,
   `voice_profile`, `content_pillars` (3–5 themes, traceability-enforced), `content_calendar`
-  (dated slots, fully-specified), `content_draft` (posts in-voice, hook+body required). Each
-  exports lenient `normalize()` + fail-closed `validate(obj,{stage})`.
+  (dated slots, fully-specified), `content_draft` (posts in-voice, hook+body required),
+  `content_repurpose` (channel-native derivatives, traced to a source draft). Each exports
+  lenient `normalize()` + fail-closed `validate(obj,{stage})`.
 - **`scripts/lib/`** — `profile.js` (load/merge/save/stampGate), `guards.js` (authenticity
   chokepoint), `interview.js` (archetype detect / branch / triangulate / synthesize),
   `voice.js` (offline voice heuristics), plus copied chassis (`supabase`, `load-env`,
   `md_to_html`).
-- **`skills/`** — seven lean `SKILL.md` contracts + companion `.js` + `references/`.
+- **`skills/`** — eight lean `SKILL.md` contracts + companion `.js` + `references/`.
 - **`templates/`** — `interview-questions.md` (the question bank companion), `person-claude.md`.
 - **`clients/<slug>/`** — per-person workspace (git-ignored).
 
@@ -62,16 +67,16 @@ review phases follow — all read the constitution Phase 1 produces.
 
 ```bash
 npm install            # dotenv only; Phase 1 is otherwise offline
-npm test               # 53 tests incl. an end-to-end gate proof through /write
+npm test               # 60 tests incl. an end-to-end gate proof through /repurpose
 # (optional, for PDF) pip install playwright && python -m playwright install chromium
 
 node skills/enroll/enroll.js "Jane Doe"
-# then /coach-interview jane → /positioning jane → /voice jane → /constitution jane → /pillars jane → /calendar jane → /write jane
+# then /coach-interview jane → /positioning jane → /voice jane → /constitution jane → /pillars jane → /calendar jane → /write jane → /repurpose jane
 ```
 
 ## Roadmap (next phases)
 
-- **Content engine** — ✅ pillars → ✅ calendar → ✅ write (authenticity-guarded) → repurpose.
+- **Content engine** — ✅ pillars → ✅ calendar → ✅ write → ✅ repurpose (all authenticity-guarded).
 - **Distribution** — multi-platform publish + engagement/relationship strategy.
 - **Authority** — podcasts, collabs, PR, newsletter growth.
 - **Review loop** — organic-first KPIs + quarterly re-interview (the coach persists).

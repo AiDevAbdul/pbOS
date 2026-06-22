@@ -39,6 +39,7 @@ self-clear a gate.
 | **Synthesize the 3–5 content pillars (content engine begins)** | `/pillars` |
 | **Lay out a sustainable posting calendar across the pillars** | `/calendar` |
 | **Draft the posts into the calendar slots, in the person's voice** | `/write` |
+| **Atomize each post into channel-native derivatives** | `/repurpose` |
 
 ### The pipeline (each step gates the next)
 
@@ -51,7 +52,8 @@ self-clear a gate.
   → /pillars            (3–5 content pillars; first CONSUMER of the constitution + first to ENFORCE the authenticity guard)
   → /calendar           (sustainable posting calendar; slots distributed across pillars by weight, capped to stated cadence)
   → /write              (draft the posts into the calendar slots, in the captured voice; brief-then-write, every draft guarded — never templated prose)
-  → [future phases: repurpose, engage, authority, review]
+  → /repurpose          (atomize each post into channel-native derivatives for secondary platforms; plan-then-recut, every derivative guarded — completes the content engine)
+  → [future phases: distribution, engage, authority, review]
 ```
 
 ---

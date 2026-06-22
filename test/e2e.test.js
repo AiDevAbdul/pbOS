@@ -215,4 +215,50 @@ test("e2e: enroll → interview → positioning(gate) → voice(gate) → consti
   r = run("skills/write/write.js", [SLUG, "--in", badDraftsPath]);
   assert.equal(r.status, 4, "authenticity guard must block fabricated authority claims");
   assert.match(r.stderr, /authenticity|certified|award/i);
+
+  // 19. REPURPOSE — atomize the drafts into channel-native derivatives for the secondary platform.
+  // platform_plan.secondary_platforms is ["X"] → each source draft → an X thread.
+  r = run("skills/repurpose/repurpose.js", [SLUG, "--plan"]);
+  assert.equal(r.status, 0, r.stderr);
+  const planOut = JSON.parse(r.stdout);
+  assert.deepEqual(planOut.targets, [{ platform: "X", format: "thread" }], "X maps to a thread");
+  assert.equal(planOut.plans.length, 3, "one plan per source draft");
+  assert.ok(planOut.plans.every((p) => p.source_body && p.must_avoid.includes("synergy")),
+    "every plan carries the source post and the banned-word list");
+
+  // Re-cut each derivative in-voice from the plan and persist (the guard runs on save).
+  const repurposeDoc = {
+    derivatives: planOut.plans.map((p) => ({
+      source_date: p.source_date, source_pillar_id: p.source_pillar_id, source_pillar_name: p.source_pillar_name,
+      target_platform: p.targets[0].platform, target_format: p.targets[0].format,
+      hook: `A thread on ${p.source_pillar_name.toLowerCase()} 🧵`,
+      body: `1/ ${p.source_hook}\n2/ The systems take, re-cut for the thread.`,
+      cta: "Which have you hit?",
+    })),
+  };
+  const repurposePath = resolve(DIR, "content_repurposes.json");
+  writeFileSync(repurposePath, JSON.stringify(repurposeDoc));
+  r = run("skills/repurpose/repurpose.js", [SLUG, "--in", repurposePath]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(existsSync(resolve(DIR, "content_repurposes.json")));
+  const savedRep = JSON.parse(readFileSync(resolve(DIR, "content_repurposes.json"), "utf8"));
+  assert.equal(savedRep.status, "repurposed");
+  assert.equal(savedRep.derivatives.length, 3);
+  assert.ok(savedRep.derivatives.every((d) => d.target_platform === "X" && d.target_format === "thread"));
+  assert.equal(savedRep.generated_from, finalProfile.positioning.statement, "derivatives trace to the positioning statement");
+
+  // 20. GUARD PROOF — the moat blocks a derivative that reintroduces a banned word.
+  const badRep = JSON.parse(JSON.stringify(repurposeDoc));
+  badRep.derivatives[0].body = "1/ Let's drive synergy across your teams."; // "synergy" is in never_say
+  const badRepPath = resolve(DIR, "bad_repurposes.json");
+  writeFileSync(badRepPath, JSON.stringify(badRep));
+  r = run("skills/repurpose/repurpose.js", [SLUG, "--in", badRepPath]);
+  assert.equal(r.status, 4, "authenticity guard must block a re-cut that reintroduces banned language");
+  assert.match(r.stderr, /authenticity|synergy/i);
+
+  // 21. GATE PROOF — a fresh persona with NO complete constitution can't repurpose.
+  r = run("skills/repurpose/repurpose.js", ["nonexistent-persona"]);
+  assert.equal(r.status, 1, "no mode flag → usage error");
+  r = run("skills/repurpose/repurpose.js", ["nonexistent-persona", "--plan"]);
+  assert.equal(r.status, 3, "repurpose must fail-closed without a complete constitution");
 });
