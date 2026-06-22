@@ -177,4 +177,42 @@ test("e2e: enroll → interview → positioning(gate) → voice(gate) → consti
   // 16. GATE PROOF — a fresh persona with NO complete constitution can't get a calendar.
   r = run("skills/calendar/calendar.js", ["nonexistent-persona"]);
   assert.equal(r.status, 3, "calendar must fail-closed without a complete constitution");
+
+  // 17. WRITE — briefs come from the calendar slots and carry the voice contract.
+  r = run("skills/write/write.js", [SLUG, "--brief", "--week", "1"]);
+  assert.equal(r.status, 0, r.stderr);
+  const briefOut = JSON.parse(r.stdout);
+  assert.equal(briefOut.briefs.length, 3, "week 1 has 3 slots → 3 briefs");
+  assert.ok(briefOut.briefs.every((b) => b.angle && b.voice && b.must_avoid.includes("synergy")),
+    "every brief carries its angle, voice, and the banned-word list");
+
+  // Draft posts in-voice from the briefs and persist them (the coach's job; the guard runs on save).
+  const draftsDoc = {
+    drafts: briefOut.briefs.map((b) => ({
+      date: b.date, week: b.week, pillar_id: b.pillar_id, pillar_name: b.pillar_name,
+      platform: b.platform, format: b.format, angle: b.angle,
+      hook: `Here's the thing about ${b.pillar_name.toLowerCase()}.`,
+      body: `A real post on the angle: ${b.angle}. Built on 10 years of building these systems.`,
+      cta: "What's your take?",
+    })),
+  };
+  const draftsPath = resolve(DIR, "content_drafts.json");
+  writeFileSync(draftsPath, JSON.stringify(draftsDoc));
+  r = run("skills/write/write.js", [SLUG, "--in", draftsPath]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(existsSync(resolve(DIR, "content_drafts.json")));
+  const savedDrafts = JSON.parse(readFileSync(resolve(DIR, "content_drafts.json"), "utf8"));
+  assert.equal(savedDrafts.status, "drafted");
+  assert.equal(savedDrafts.drafts.length, 3);
+  assert.equal(savedDrafts.generated_from, finalProfile.positioning.statement, "drafts trace to the positioning statement");
+  assert.ok(savedDrafts.drafts.every((d) => d.hook && d.body), "every persisted draft is fully written");
+
+  // 18. GUARD PROOF — the moat blocks a draft that fabricates an authority claim.
+  const badDrafts = JSON.parse(JSON.stringify(draftsDoc));
+  badDrafts.drafts[0].body = "As a board-certified, award-winning expert, here's my take."; // unsupported claims
+  const badDraftsPath = resolve(DIR, "bad_drafts.json");
+  writeFileSync(badDraftsPath, JSON.stringify(badDrafts));
+  r = run("skills/write/write.js", [SLUG, "--in", badDraftsPath]);
+  assert.equal(r.status, 4, "authenticity guard must block fabricated authority claims");
+  assert.match(r.stderr, /authenticity|certified|award/i);
 });

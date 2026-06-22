@@ -13,3 +13,4 @@ export * as interviewAnswers from "./interview_answers.js";
 export * as voiceProfile from "./voice_profile.js";
 export * as contentPillars from "./content_pillars.js";
 export * as contentCalendar from "./content_calendar.js";
+export * as contentDraft from "./content_draft.js";

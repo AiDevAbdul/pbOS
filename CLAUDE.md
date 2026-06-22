@@ -38,6 +38,7 @@ self-clear a gate.
 | Assemble the per-person constitution (HTML+PDF) | `/constitution` |
 | **Synthesize the 3–5 content pillars (content engine begins)** | `/pillars` |
 | **Lay out a sustainable posting calendar across the pillars** | `/calendar` |
+| **Draft the posts into the calendar slots, in the person's voice** | `/write` |
 
 ### The pipeline (each step gates the next)
 
@@ -49,7 +50,8 @@ self-clear a gate.
   → /constitution       (per-person CLAUDE.md + brand-of-one HTML/PDF; requires BOTH gates)
   → /pillars            (3–5 content pillars; first CONSUMER of the constitution + first to ENFORCE the authenticity guard)
   → /calendar           (sustainable posting calendar; slots distributed across pillars by weight, capped to stated cadence)
-  → [future phases: write, repurpose, engage, authority, review]
+  → /write              (draft the posts into the calendar slots, in the captured voice; brief-then-write, every draft guarded — never templated prose)
+  → [future phases: repurpose, engage, authority, review]
 ```
 
 ---
