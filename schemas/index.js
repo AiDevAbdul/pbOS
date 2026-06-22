@@ -12,3 +12,4 @@ export * as personalBrandProfile from "./personal_brand_profile.js";
 export * as interviewAnswers from "./interview_answers.js";
 export * as voiceProfile from "./voice_profile.js";
 export * as contentPillars from "./content_pillars.js";
+export * as contentCalendar from "./content_calendar.js";

@@ -8,16 +8,16 @@ persistence, HTML/PDF rendering).
 
 ## Status — Phase 1 (Foundation) ✅ · Phase 2 (Content engine) 🚧
 
-Phase 1 delivers the foundation and discovery engine. Phase 2 begins the content engine
-with **`/pillars`** — the first CONSUMER of the constitution and the first skill to actually
-ENFORCE the authenticity guard the foundation built. The rest of the content engine
-(calendar, write, repurpose) and distribution/authority/review phases follow — all read
-the constitution Phase 1 produces.
+Phase 1 delivers the foundation and discovery engine. Phase 2 is the content engine:
+**`/pillars`** (the first CONSUMER of the constitution and the first skill to ENFORCE the
+authenticity guard) then **`/calendar`** (a sustainable posting plan across those pillars).
+The rest of the content engine (write, repurpose) and the distribution/authority/review
+phases follow — all read the constitution Phase 1 produces.
 
 ## The pipeline
 
 ```
-/enroll → /coach-interview → /positioning (gate) → /voice (gate) → /constitution → /pillars
+/enroll → /coach-interview → /positioning (gate) → /voice (gate) → /constitution → /pillars → /calendar
 ```
 
 1. **/enroll** — scaffold the person's isolated workspace.
@@ -29,12 +29,15 @@ the constitution Phase 1 produces.
    (requires BOTH gates).
 6. **/pillars** — synthesize the 3–5 content pillars from the complete constitution; every
    pillar must trace to a real fact (`why_this_person`) and clear the authenticity guard.
+7. **/calendar** — lay out a dated posting calendar across the pillars (weighted by mix),
+   capped to the person's stated cadence so it stays sustainable; every angle is guarded.
 
 ## Architecture
 
 - **`schemas/`** — `personal_brand_profile` (the constitution + 2 gates), `interview_answers`,
-  `voice_profile`, `content_pillars` (3–5 themes, traceability-enforced). Each exports
-  lenient `normalize()` + fail-closed `validate(obj,{stage})`.
+  `voice_profile`, `content_pillars` (3–5 themes, traceability-enforced), `content_calendar`
+  (dated slots, fully-specified). Each exports lenient `normalize()` + fail-closed
+  `validate(obj,{stage})`.
 - **`scripts/lib/`** — `profile.js` (load/merge/save/stampGate), `guards.js` (authenticity
   chokepoint), `interview.js` (archetype detect / branch / triangulate / synthesize),
   `voice.js` (offline voice heuristics), plus copied chassis (`supabase`, `load-env`,
@@ -59,12 +62,12 @@ npm test               # 27 tests incl. an end-to-end gate proof
 # (optional, for PDF) pip install playwright && python -m playwright install chromium
 
 node skills/enroll/enroll.js "Jane Doe"
-# then /coach-interview jane → /positioning jane → /voice jane → /constitution jane → /pillars jane
+# then /coach-interview jane → /positioning jane → /voice jane → /constitution jane → /pillars jane → /calendar jane
 ```
 
 ## Roadmap (next phases)
 
-- **Content engine** — ✅ pillars → calendar → write (authenticity-guarded) → repurpose.
+- **Content engine** — ✅ pillars → ✅ calendar → write (authenticity-guarded) → repurpose.
 - **Distribution** — multi-platform publish + engagement/relationship strategy.
 - **Authority** — podcasts, collabs, PR, newsletter growth.
 - **Review loop** — organic-first KPIs + quarterly re-interview (the coach persists).

@@ -160,4 +160,21 @@ test("e2e: enroll → interview → positioning(gate) → voice(gate) → consti
   r = run("skills/pillars/pillars.js", [SLUG, "--in", badPath]);
   assert.equal(r.status, 4, "authenticity guard must block off-brand pillars");
   assert.match(r.stderr, /authenticity|synergy/i);
+
+  // 15. CALENDAR — lay out a sustainable posting calendar across the pillars.
+  // cadence.weekly_volume is "3 posts/week"; 4 weeks → 12 slots, capped to stated capacity.
+  r = run("skills/calendar/calendar.js", [SLUG, "--weeks", "4", "--start", "2026-07-01"]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(existsSync(resolve(DIR, "content_calendar.json")));
+  const cal = JSON.parse(readFileSync(resolve(DIR, "content_calendar.json"), "utf8"));
+  assert.equal(cal.posts_per_week, 3, "posts/week derived from cadence, not inflated");
+  assert.equal(cal.slots.length, 12, "4 weeks × 3 posts/week");
+  assert.ok(cal.slots.every((s) => s.date && s.pillar_id && s.platform && s.format && s.angle), "every slot fully specified");
+  // All three pillars are represented (range, not one-note).
+  assert.equal(new Set(cal.slots.map((s) => s.pillar_id)).size, 3);
+  assert.equal(cal.slots[0].platform, "LinkedIn", "uses the constitution's primary platform");
+
+  // 16. GATE PROOF — a fresh persona with NO complete constitution can't get a calendar.
+  r = run("skills/calendar/calendar.js", ["nonexistent-persona"]);
+  assert.equal(r.status, 3, "calendar must fail-closed without a complete constitution");
 });
