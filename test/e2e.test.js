@@ -119,4 +119,45 @@ test("e2e: enroll → interview → positioning(gate) → voice(gate) → consti
   const claudeMd = readFileSync(resolve(DIR, "CLAUDE.md"), "utf8");
   assert.match(claudeMd, /Personal Brand Constitution/);
   assert.match(claudeMd, /systems clarity for CTOs/); // niche filled
+
+  // 12. CONTENT ENGINE — pillars seeds derive deterministically from the constitution.
+  r = run("skills/pillars/pillars.js", [SLUG, "--seeds"]);
+  assert.equal(r.status, 0, r.stderr);
+  const seeds = JSON.parse(r.stdout).seeds;
+  assert.ok(seeds.length >= 3, "complete constitution should yield enough pillar seeds");
+  assert.ok(seeds.every((s) => s.why_this_person), "every seed traces to the constitution");
+
+  // 13. persist a valid 3-pillar set (consumer of the complete constitution).
+  const pillarsDoc = {
+    pillars: [
+      { name: "Calm systems", thesis: "Scaling pain is org design, not tech debt.",
+        why_this_person: "identity.zone_of_genius", serves: "early-stage CTOs",
+        formats: ["text"], sample_angles: ["3 org smells that look like tech debt"], weight: 0.4 },
+      { name: "The fragile-scale myth", thesis: "Most scale advice makes systems more fragile.",
+        why_this_person: "identity.contrarian_pov", serves: "early-stage CTOs",
+        formats: ["text"], sample_angles: ["why your on-call rotation is a hiring problem"], weight: 0.35 },
+      { name: "Chaos to calm", thesis: "Walk CTOs from scaling chaos to calm systems.",
+        why_this_person: "positioning.transformation", serves: "early-stage CTOs",
+        formats: ["text"], sample_angles: ["the first system to fix when you hit 20 engineers"], weight: 0.25 },
+    ],
+    mix_rationale: "Anchor on zone-of-genius + transformation; contrarian for reach.",
+  };
+  const pillarsPath = resolve(DIR, "content_pillars.json");
+  writeFileSync(pillarsPath, JSON.stringify(pillarsDoc));
+  r = run("skills/pillars/pillars.js", [SLUG, "--in", pillarsPath]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(existsSync(resolve(DIR, "content_pillars.json")));
+  const savedPillars = JSON.parse(readFileSync(resolve(DIR, "content_pillars.json"), "utf8"));
+  assert.equal(savedPillars.pillars.length, 3);
+  assert.equal(savedPillars.status, "drafted");
+  assert.equal(savedPillars.generated_from, finalProfile.positioning.statement, "pillars trace to the positioning statement");
+
+  // 14. GUARD PROOF — the authenticity moat blocks an off-brand pillar (banned word "synergy").
+  const badPillars = JSON.parse(JSON.stringify(pillarsDoc));
+  badPillars.pillars[0].sample_angles = ["how to drive synergy across teams"]; // "synergy" is in never_say
+  const badPath = resolve(DIR, "bad_pillars.json");
+  writeFileSync(badPath, JSON.stringify(badPillars));
+  r = run("skills/pillars/pillars.js", [SLUG, "--in", badPath]);
+  assert.equal(r.status, 4, "authenticity guard must block off-brand pillars");
+  assert.match(r.stderr, /authenticity|synergy/i);
 });

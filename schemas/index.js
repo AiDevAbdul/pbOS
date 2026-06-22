@@ -11,3 +11,4 @@ export { SchemaError, assertValid, slugId } from "./_shared.js";
 export * as personalBrandProfile from "./personal_brand_profile.js";
 export * as interviewAnswers from "./interview_answers.js";
 export * as voiceProfile from "./voice_profile.js";
+export * as contentPillars from "./content_pillars.js";
