@@ -1,0 +1,7 @@
+node_modules/
+.env
+# Per-person working data — never commit a real person's profile/voice/transcript.
+clients/*/
+!clients/.gitkeep
+*.pdf
+.DS_Store

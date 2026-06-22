@@ -1,0 +1,10 @@
+{
+  "name": "pbos",
+  "version": "0.1.0",
+  "description": "Personal Branding OS — an expert coach that interviews a person first, then runs a discovery-driven operating system that specializes every output to that individual",
+  "author": {
+    "name": "pbOS"
+  },
+  "homepage": "https://github.com/pbOS",
+  "keywords": ["personal-branding", "thought-leadership", "creator", "coaching", "discovery", "positioning", "voice"]
+}
